@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wording trends in the movie industry</title>
+
+    {% load static %}
+
+    <link rel="icon" href="{% static 'MovieTitlesDataVisualization/LogoIcon.png' %}" sizes="16x16">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    
+    <!-- JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+        crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+        <style>
+            .Nav_Bar {
+                background-color: #00897B;
+                padding: 3%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        
+            .navIcon {
+                height: 70px;
+                width: 70px;
+                margin-right: 10px;
+            }
+
+            .Header_{
+                color:#f9f9f9
+            }
+
+            .searchContainer{
+                padding: 5%;
+            }
+
+            .ButtonSearch{
+                background-color: #00897B;
+                color: #f9f9f9;
+            }
+
+            .ChartDiv{
+                height: 600px;
+                margin-top: 5%;
+            }
+
+            @media screen and (max-width: 680px) {
+                .Header_{
+                    font-size: 14px;
+                }
+
+                .navIcon{
+                    height: 40px;
+                    width: 40px;
+                }
+
+                h1{
+                    font-size: 20px;
+                }
+            }
+
+            @media screen and (max-width: 830px) {
+                .ChartDiv{
+                    width: 200px;
+                }
+            }
+
+        </style>
+</head>
+<body style="overflow-x: hidden;">
+
+    <div class="Nav_Bar">
+        <img class="navIcon" src="{% static 'MovieTitlesDataVisualization/Logo.png' %}">
+        <h2 class="Header_">Wording Trends in the Movie Industry</h2>
+    </div>
+
+    <form class="searchContainer" id="myForm">
+        {% csrf_token %}
+        <div class="row justify-content-center">
+            <input class="form-control col-xl-3 col-lg-4 col-md-4 col-6" id="keyword" placeholder="Enter Keyword"
+                style="border: 1px solid black;" name="keyword">
+        </div>
+    
+        <div class="row justify-content-center" style="margin-top:1%">
+            <button type="submit" id="myButton" class="btn ButtonSearch col-xl-2 col-lg-2 col-md-2 col-sm-2 col-4">Search</button>
+        </div>
+
+        <div class="row justify-content-center" style="margin-top:1%;" id="loading">
+            <h1>
+                Loading...
+            </h1>
+        </div>
+
+        <div class="row justify-content-center ChartDiv" id="top_x_div" ></div>
+    
+    </form>
+
+    <script>
+        $(function () {
+            $('#loading').hide();
+            $('#myForm').submit(function (e) {
+                e.preventDefault();
+                $('#loading').show();
+                var keyword = $('#keyword').val();
+                $.ajax({
+                    type: "GET",
+                    url: "{% url 'ajaxResponse' %}",
+                    data: {'data' : keyword},
+
+                    success: function (data) {
+                        $('#loading').hide();
+                        var response = data.response_
+
+                        //console.log(response['2013']);
+                        google.charts.load('current', { 'packages': ['bar'] });
+                        google.charts.setOnLoadCallback(drawStuff);
+
+                        function drawStuff() {
+                            var data = new google.visualization.arrayToDataTable([
+                                ['Years', 'Counts'],
+                                ["2013", parseInt(response['2013'])],
+                                ["2014", parseInt(response['2014'])],
+                                ["2015", parseInt(response['2015'])],
+                                ["2016", parseInt(response['2016'])],
+                                ["2017", parseInt(response['2017'])],
+                                ["2018", parseInt(response['2018'])],
+                                ["2019", parseInt(response['2019'])],
+                                ["2020", parseInt(response['2020'])],
+                            ]);
+
+                            var options = {
+                                width: 800,
+                                legend: { position: 'none' },
+                                chart: {
+                                    title: 'Movie Titles',
+                                    subtitle: 'popularity by Keywords'
+                                },
+                                axes: {
+                                    x: {
+                                        0: { side: 'top' } // Top x-axis.
+                                    },
+                                },
+                                bar: { groupWidth: "60%" }
+                            };
+
+                            var chart = new google.charts.Bar(document.getElementById('top_x_div'));
+                            // Convert the Classic options to Material options.
+                            chart.draw(data, google.charts.Bar.convertOptions(options));
+                        };
+                    },
+
+                    error: function (data) {
+                        $('#loading').hide();
+                        alert('Some Error Occurred. Try Again');
+                    }
+                });
+            });
+        });
+    </script>
+    
+</body>
+</html>
